@@ -1,0 +1,208 @@
+<mujoco model="medical_scene_advanced">
+  <compiler angle="degree" coordinate="local" inertiafromgeom="true" autolimits="true"/>
+
+  <option timestep="0.002" gravity="0 0 -9.81" iterations="50" ls_iterations="20">
+    <flag warmstart="enable" contact="enable" override="enable"/>
+  </option>
+
+  <visual>
+    <global offwidth="1920" offheight="1080"/>
+    <quality shadowsize="4096"/>
+    <map force="0.1" fogstart="3" fogend="5" znear="0.01"/>
+    <headlight ambient="0.5 0.5 0.5" diffuse="0.8 0.8 0.8"/>
+  </visual>
+
+  <asset>
+    <!-- 纹理定义 -->
+    <texture name="floor_tex" type="2d" builtin="checker" rgb1="0.9 0.9 0.9" rgb2="0.8 0.8 0.8" width="512" height="512"/>
+    <material name="floor_mat" texture="floor_tex" texrepeat="5 5" reflectance="0.1"/>
+
+    <texture name="metal_tex" type="2d" builtin="flat" rgb1="0.7 0.7 0.8" width="32" height="32"/>
+    <material name="metal" texture="metal_tex" specular="1" shininess="0.5" reflectance="0.3"/>
+
+    <texture name="skin_tex" type="2d" builtin="flat" rgb1="0.95 0.8 0.7" width="32" height="32"/>
+    <material name="skin" texture="skin_tex" specular="0.3" shininess="0.1"/>
+
+    <texture name="white_tex" type="2d" builtin="flat" rgb1="0.95 0.95 0.95" width="32" height="32"/>
+    <material name="white" texture="white_tex" specular="0.5" shininess="0.3"/>
+  </asset>
+
+  <default>
+    <default class="robot">
+      <joint damping="0.5" frictionloss="0.1"/>
+      <geom friction="1.0 0.5 0.5" condim="3" solimp="0.95 0.995 0.001" solref="0.002 1"/>
+      <motor ctrllimited="true" ctrlrange="-1 1"/>
+    </default>
+
+    <default class="gripper">
+      <joint damping="0.2" frictionloss="0.05"/>
+      <geom friction="2.0 1.0 0.5" condim="4" solimp="0.99 0.999 0.001" solref="0.001 1"/>
+    </default>
+  </default>
+
+  <worldbody>
+    <!-- 增强照明系统 -->
+    <light directional="true" pos="0 0 3" dir="0 0 -1" diffuse="0.8 0.8 0.8"/>
+    <light directional="true" pos="2 2 3" dir="-1 -1 -1" diffuse="0.5 0.5 0.5"/>
+    <light directional="true" pos="-2 2 3" dir="1 -1 -1" diffuse="0.4 0.4 0.4"/>
+
+    <!-- 地板 -->
+    <geom name="floor" type="plane" size="5 5 0.1" material="floor_mat" condim="3"/>
+
+    <!-- 手术台 -->
+    <body name="surgery_table" pos="0 0 0.5">
+      <geom name="table_top" type="box" size="0.8 0.4 0.03" rgba="0.9 0.9 0.95 1" material="white" mass="50"/>
+      <geom name="table_leg1" type="cylinder" size="0.03 0.5" pos="0.7 0.3 -0.53" rgba="0.7 0.7 0.75 1" mass="5"/>
+      <geom name="table_leg2" type="cylinder" size="0.03 0.5" pos="0.7 -0.3 -0.53" rgba="0.7 0.7 0.75 1" mass="5"/>
+      <geom name="table_leg3" type="cylinder" size="0.03 0.5" pos="-0.7 0.3 -0.53" rgba="0.7 0.7 0.75 1" mass="5"/>
+      <geom name="table_leg4" type="cylinder" size="0.03 0.5" pos="-0.7 -0.3 -0.53" rgba="0.7 0.7 0.75 1" mass="5"/>
+
+      <!-- 患者腹部模型（软组织） -->
+      <body name="patient_abdomen" pos="0 0 0.1">
+        <geom name="abdomen" type="ellipsoid" size="0.15 0.2 0.08" material="skin" mass="2"
+              friction="0.8 0.4 0.2" solimp="0.9 0.95 0.001" solref="0.01 1"/>
+        <!-- 手术目标点（可交互） -->
+        <body name="surgical_target" pos="0 0.05 0.08">
+          <geom name="target_marker" type="sphere" size="0.01" rgba="0.9 0.2 0.2 1" mass="0.01"/>
+          <site name="target_site" pos="0 0 0" size="0.005" rgba="1 0 0 1"/>
+        </body>
+      </body>
+    </body>
+
+    <!-- 医疗机械臂（优化参数） -->
+    <body name="robot_base" pos="1.2 0 0">
+      <geom name="base" type="cylinder" size="0.1 0.05" rgba="0.3 0.3 0.4 1" material="metal" mass="10"/>
+      <site name="base_site" pos="0 0 0.05" size="0.02"/>
+
+      <!-- 关节1：底座旋转 -->
+      <body name="link1" pos="0 0 0.05" childclass="robot">
+        <inertial pos="0 0 0.15" mass="3" diaginertia="0.05 0.05 0.01"/>
+        <joint name="joint1" type="hinge" axis="0 0 1" range="-180 180" damping="1.0" armature="0.1"/>
+        <geom name="link1_geom" type="cylinder" size="0.04 0.3" rgba="0.4 0.4 0.5 1" material="metal"/>
+        <site name="link1_site" pos="0 0 0.3" size="0.015"/>
+
+        <!-- 关节2：肩部 -->
+        <body name="link2" pos="0 0 0.3">
+          <inertial pos="0 0 0.125" mass="2" diaginertia="0.03 0.03 0.01"/>
+          <joint name="joint2" type="hinge" axis="0 1 0" range="-120 120" damping="0.8" armature="0.08"/>
+          <geom name="link2_geom" type="capsule" fromto="0 0 0 0 0 0.25" size="0.03" rgba="0.5 0.5 0.6 1" material="metal"/>
+          <site name="link2_site" pos="0 0 0.25" size="0.015"/>
+
+          <!-- 关节3：肘部 -->
+          <body name="link3" pos="0 0 0.25">
+            <inertial pos="0 0 0.1" mass="1.5" diaginertia="0.02 0.02 0.005"/>
+            <joint name="joint3" type="hinge" axis="0 1 0" range="-140 140" damping="0.6" armature="0.06"/>
+            <geom name="link3_geom" type="capsule" fromto="0 0 0 0 0 0.2" size="0.025" rgba="0.6 0.6 0.7 1" material="metal"/>
+            <site name="link3_site" pos="0 0 0.2" size="0.01"/>
+
+            <!-- 关节4：腕部 -->
+            <body name="wrist" pos="0 0 0.2">
+              <inertial pos="0 0 0.03" mass="0.5" diaginertia="0.005 0.005 0.002"/>
+              <joint name="joint4" type="hinge" axis="0 0 1" range="-180 180" damping="0.3" armature="0.03"/>
+              <geom name="wrist_geom" type="cylinder" size="0.02 0.03" rgba="0.7 0.7 0.8 1" material="metal"/>
+              <site name="wrist_site" pos="0 0 0.03" size="0.01"/>
+
+              <!-- 末端执行器（带力传感器） -->
+              <body name="gripper_base" pos="0 0 0.03" childclass="gripper">
+                <inertial pos="0 0 0.04" mass="0.3" diaginertia="0.002 0.002 0.001"/>
+                <geom name="gripper_palm" type="box" size="0.015 0.02 0.04" rgba="0.8 0.8 0.9 1" material="metal"/>
+                <site name="gripper_center" pos="0 0 0.06" size="0.005" rgba="0 1 0 1"/>
+
+                <!-- 左侧钳口（带触觉传感器） -->
+                <body name="left_finger" pos="0 0.02 0.03">
+                  <inertial pos="0 0.005 0.015" mass="0.05" diaginertia="0.0001 0.0001 0.00005"/>
+                  <joint name="left_finger_joint" type="hinge" axis="1 0 0" range="0 30" damping="0.15" armature="0.01"/>
+                  <geom name="left_finger_geom" type="box" size="0.01 0.005 0.03" rgba="0.9 0.9 1 1" material="metal"/>
+                  <site name="left_finger_tip" pos="0 0 0.03" size="0.003" rgba="1 1 0 1"/>
+                </body>
+
+                <!-- 右侧钳口（带触觉传感器） -->
+                <body name="right_finger" pos="0 -0.02 0.03">
+                  <inertial pos="0 -0.005 0.015" mass="0.05" diaginertia="0.0001 0.0001 0.00005"/>
+                  <joint name="right_finger_joint" type="hinge" axis="1 0 0" range="-30 0" damping="0.15" armature="0.01"/>
+                  <geom name="right_finger_geom" type="box" size="0.01 0.005 0.03" rgba="0.9 0.9 1 1" material="metal"/>
+                  <site name="right_finger_tip" pos="0 0 0.03" size="0.003" rgba="1 1 0 1"/>
+                </body>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+
+    <!-- 器械托盘 -->
+    <body name="instrument_tray" pos="-0.8 0.6 0.8">
+      <geom name="tray" type="box" size="0.15 0.2 0.02" rgba="0.85 0.85 0.9 1" material="metal" mass="2"/>
+      <geom name="scalpel_handle" type="capsule" fromto="-0.08 0 0.03 -0.08 0 0.11" size="0.005" rgba="0.3 0.3 0.3 1"/>
+      <geom name="scalpel_blade" type="box" size="0.002 0.008 0.015" pos="-0.08 0 0.12" rgba="0.9 0.9 0.95 1" material="metal"/>
+      <geom name="forceps_body" type="capsule" fromto="0 0 0.03 0 0 0.13" size="0.004" rgba="0.8 0.8 0.85 1" material="metal"/>
+      <geom name="forceps_tip1" type="box" size="0.002 0.004 0.015" pos="-0.003 0 0.135" rgba="0.85 0.85 0.9 1" material="metal"/>
+      <geom name="forceps_tip2" type="box" size="0.002 0.004 0.015" pos="0.003 0 0.135" rgba="0.85 0.85 0.9 1" material="metal"/>
+      <geom name="syringe_barrel" type="cylinder" size="0.006 0.05" pos="0.08 0 0.05" rgba="0.9 0.9 0.95 0.7"/>
+      <geom name="syringe_plunger" type="capsule" fromto="0.08 0 0.1 0.08 0 0.13" size="0.003" rgba="0.8 0.8 0.85 1"/>
+      <geom name="syringe_needle" type="capsule" fromto="0.08 0 0 0.08 0 -0.02" size="0.001" rgba="0.9 0.9 0.95 1" material="metal"/>
+    </body>
+
+    <!-- 监护仪 -->
+    <body name="monitor_stand" pos="0.5 1 0">
+      <geom name="stand_pole" type="cylinder" size="0.02 0.8" rgba="0.4 0.4 0.45 1" material="metal" mass="5"/>
+      <body name="monitor" pos="0 0 0.8">
+        <geom name="monitor_screen" type="box" size="0.15 0.02 0.12" rgba="0.1 0.1 0.15 1" mass="2"/>
+        <geom name="monitor_display" type="box" size="0.14 0.015 0.11" pos="0 -0.021 0" rgba="0.2 0.3 0.25 1"/>
+        <site name="monitor_camera" pos="0 -0.04 0" size="0.005" rgba="0 0 1 1"/>
+      </body>
+    </body>
+  </worldbody>
+
+  <!-- 传感器系统 -->
+  <sensor>
+    <!-- 关节位置传感器 -->
+    <jointpos name="joint1_pos" joint="joint1"/>
+    <jointpos name="joint2_pos" joint="joint2"/>
+    <jointpos name="joint3_pos" joint="joint3"/>
+    <jointpos name="joint4_pos" joint="joint4"/>
+    <jointpos name="left_finger_pos" joint="left_finger_joint"/>
+    <jointpos name="right_finger_pos" joint="right_finger_joint"/>
+
+    <!-- 关节速度传感器 -->
+    <jointvel name="joint1_vel" joint="joint1"/>
+    <jointvel name="joint2_vel" joint="joint2"/>
+    <jointvel name="joint3_vel" joint="joint3"/>
+    <jointvel name="joint4_vel" joint="joint4"/>
+    <jointvel name="left_finger_vel" joint="left_finger_joint"/>
+    <jointvel name="right_finger_vel" joint="right_finger_joint"/>
+
+    <!-- 力/力矩传感器 -->
+    <force name="gripper_force" site="gripper_center"/>
+    <torque name="gripper_torque" site="gripper_center"/>
+
+    <!-- 触觉传感器（钳口） -->
+    <touch name="left_finger_touch" site="left_finger_tip"/>
+    <touch name="right_finger_touch" site="right_finger_tip"/>
+
+    <!-- 末端执行器位置和方向 -->
+    <framepos name="gripper_position" objtype="site" objname="gripper_center"/>
+    <framequat name="gripper_orientation" objtype="site" objname="gripper_center"/>
+    <framelinvel name="gripper_linvel" objtype="site" objname="gripper_center"/>
+    <frameangvel name="gripper_angvel" objtype="site" objname="gripper_center"/>
+
+    <!-- 目标位置 -->
+    <framepos name="target_position" objtype="site" objname="target_site"/>
+
+    <!-- 加速度计 -->
+    <accelerometer name="gripper_accel" site="gripper_center"/>
+    <gyro name="gripper_gyro" site="gripper_center"/>
+  </sensor>
+
+  <!-- 执行器系统（优化增益） -->
+  <actuator>
+    <!-- 位置控制执行器 -->
+    <position name="actuator1" joint="joint1" kp="100" kv="10" ctrlrange="-3.14 3.14" forcerange="-100 100"/>
+    <position name="actuator2" joint="joint2" kp="80" kv="8" ctrlrange="-2.1 2.1" forcerange="-80 80"/>
+    <position name="actuator3" joint="joint3" kp="60" kv="6" ctrlrange="-2.4 2.4" forcerange="-60 60"/>
+    <position name="actuator4" joint="joint4" kp="40" kv="4" ctrlrange="-3.14 3.14" forcerange="-40 40"/>
+    <position name="actuator_left_finger" joint="left_finger_joint" kp="20" kv="2" ctrlrange="0 0.52" forcerange="-20 20"/>
+    <position name="actuator_right_finger" joint="right_finger_joint" kp="20" kv="2" ctrlrange="-0.52 0" forcerange="-20 20"/>
+  </actuator>
+
+</mujoco>
