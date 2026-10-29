@@ -23,7 +23,7 @@ MuJoCo 3.4 · Python · Gymnasium · Stable-Baselines3
 
 ```bash
 git clone https://github.com/hahaaa520/-.git
-cd -
+cd -- -
 python -m pip install "mujoco>=3.4.0" "numpy>=1.24.0"
 python run_advanced.py
 ```
