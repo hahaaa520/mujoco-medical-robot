@@ -1,183 +1,114 @@
-# MuJoCo 医疗场景仿真
+# MuJoCo 医疗机器人仿真
 
-基于 MuJoCo 物理引擎构建的医疗手术场景仿真项目，包含手术机器人、手术台、医疗器械等元素。
+> 一个可交互的医疗机械臂场景，以及带传感器、域随机化和 Gymnasium 接口的强化学习实验环境。
 
-## 场景组成
+MuJoCo 3.4 · Python · Gymnasium · Stable-Baselines3
 
-### 1. 手术台
-- 符合人体工学的手术台设计
-- 患者腹部模型
-- 手术切口区域标识
+![MuJoCo 医疗机器人真实场景渲染](docs/scene-preview.png)
 
-### 2. 医疗机械臂（手术机器人）
-- **6 个自由度**：
-  - 关节 1：底座旋转（360°）
-  - 关节 2：肩部关节（240° 范围）
-  - 关节 3：肘部关节（280° 范围）
-  - 关节 4：腕部旋转（360°）
-  - 关节 5-6：双指钳口
-- 精确的运动控制
-- 金属材质渲染
+## 项目包含什么
 
-### 3. 手术器械托盘
-包含以下可移动器械：
-- 手术刀
-- 医用镊子
-- 注射器
+- **医疗场景**：6 关节机械臂、手术台、目标点、器械托盘和监护仪。
+- **交互控制**：通过键盘控制关节与双指钳口，支持重置和自动演示。
+- **23 个传感器元素**：关节位置／速度、力／力矩、触觉、位姿、速度、加速度计和陀螺仪等。
+- **Gymnasium 环境**：标准化观察、动作、奖励与回合结束接口。
+- **域随机化**：可配置摩擦、质量、关节阻尼和执行器增益随机化。
+- **强化学习脚本**：支持 SAC、TD3、PPO，以及检查点、评估和 TensorBoard 日志。
 
-### 4. 辅助设备
-- 监护仪和支架
-- 专业照明系统
+> 这是用于教学与算法原型的仿真项目，不是医疗设备或临床训练系统。
 
-## 环境要求
+## 快速开始
 
-### Python 版本
-- Python 3.8 或更高版本
+推荐使用 Python 虚拟环境。基础交互场景只需要 MuJoCo 和 NumPy：
 
-### 依赖包
 ```bash
-pip install mujoco
-pip install numpy
+git clone https://github.com/hahaaa520/-.git
+cd -
+python -m pip install "mujoco>=3.4.0" "numpy>=1.24.0"
+python run_advanced.py
 ```
 
-## 安装步骤
+如果只需要原始基础场景：
 
-1. **安装 MuJoCo**
-```bash
-pip install mujoco
-```
-
-2. **克隆或下载本项目**
-确保以下文件在同一目录：
-- `medical_scene.xml` - 场景定义文件
-- `run_medical_scene.py` - 运行脚本
-
-3. **验证安装**
-```bash
-python -c "import mujoco; print(mujoco.__version__)"
-```
-
-## 使用方法
-
-### 启动场景
 ```bash
 python run_medical_scene.py
 ```
 
-### 键盘控制
+如需 Gymnasium 环境和强化学习功能，再安装完整依赖：
+
+```bash
+python -m pip install -r requirements.txt
+python medical_robot_env.py
+```
+
+Linux／macOS 也可以运行 `./start.sh` 选择模式。脚本只检查依赖，不会自动修改系统 Python 环境。
+
+## 交互控制
 
 | 按键 | 功能 |
-|------|------|
-| Q / A | 控制关节1（底座左右旋转）|
-| W / S | 控制关节2（肩部上下）|
-| E / D | 控制关节3（肘部伸缩）|
-| R / F | 控制关节4（腕部旋转）|
-| T / G | 控制左侧钳口（张开/闭合）|
-| Y / H | 控制右侧钳口（张开/闭合）|
-| 空格 | 重置场景到初始状态 |
-| ESC | 退出程序 |
+| --- | --- |
+| Q / A | 底座旋转 |
+| W / S | 肩部关节 |
+| E / D | 肘部关节 |
+| R / F | 腕部旋转 |
+| T / G | 左侧钳口 |
+| Y / H | 右侧钳口 |
+| M | 高级场景中切换手动／自动模式 |
+| P | 高级场景中打印传感器数据 |
+| Space | 重置场景 |
+| Esc | 退出 |
 
-### 相机控制
-- **鼠标左键拖拽**：旋转视角
-- **鼠标右键拖拽**：平移视角
-- **鼠标滚轮**：缩放视角
-- **双击**：聚焦到点击的物体
+鼠标可旋转、平移和缩放视角。
 
-## 场景文件说明
+## 强化学习
 
-### medical_scene.xml
-这是 MuJoCo 场景描述文件，使用 XML 格式定义：
-- 物体的几何形状和位置
-- 材质和纹理
-- 关节和执行器
-- 物理属性
+```bash
+# 随机策略基线演示，不代表训练成果
+python train_rl.py --mode demo --n_episodes 3
 
-### 主要组件层次结构
-```
-worldbody
-├── floor（地板）
-├── surgery_table（手术台）
-│   └── patient_abdomen（患者腹部）
-├── robot_base（机械臂基座）
-│   └── link1 → link2 → link3 → wrist → gripper（关节链）
-├── instrument_tray（器械托盘）
-│   ├── scalpel（手术刀）
-│   ├── forceps（镊子）
-│   └── syringe（注射器）
-└── monitor_stand（监护仪）
+# 训练 SAC
+python train_rl.py --mode train --algorithm SAC --timesteps 500000 --n_envs 4
+
+# 评估已保存模型
+python train_rl.py --mode evaluate --model_path models/SAC/best_model.zip --n_episodes 20
+
+# 查看训练日志
+tensorboard --logdir logs/
 ```
 
-## 自定义场景
+仓库不附带已训练模型、成功率或 Sim-to-Real 实验结果。训练与评估数据应以你本地运行输出为准。
 
-### 修改机械臂参数
-在 `medical_scene.xml` 中找到相应的 `<joint>` 标签，可以修改：
-- `range`：关节运动范围
-- `damping`：阻尼系数
-- `axis`：旋转轴方向
+## 文件入口
 
-### 添加新物体
-在 `<worldbody>` 中添加新的 `<body>` 元素：
-```xml
-<body name="new_object" pos="x y z">
-  <geom name="object_geom" type="box" size="0.1 0.1 0.1" rgba="1 0 0 1"/>
-</body>
+| 文件 | 用途 |
+| --- | --- |
+| `run_advanced.py` | 推荐的高级交互场景 |
+| `medical_scene_advanced.xml` | 带传感器的高级模型 |
+| `medical_robot_env.py` | Gymnasium 环境、传感器读取与域随机化 |
+| `train_rl.py` | SAC／TD3／PPO 训练、评估与随机策略演示 |
+| `run_medical_scene.py` | 原始基础场景入口 |
+| `medical_scene.xml` | 原始基础模型 |
+| `tools/render_preview.py` | 无交互窗口渲染 README 预览图 |
+| `docs/ADVANCED.md` | 环境接口、训练配置与自定义说明 |
+
+`medical_scene_fixed.xml` 作为历史场景变体保留，不是默认入口。
+
+## 重新生成预览图
+
+预览图由仓库中的高级 XML 场景实际渲染，不是概念插画：
+
+```bash
+python -m pip install pillow
+python tools/render_preview.py
 ```
 
-### 调整材质和外观
-在 `<asset>` 部分可以定义新的纹理和材质。
+## 参考文档
 
-## 应用场景
+- [高级使用与自定义](docs/ADVANCED.md)
+- [MuJoCo 文档](https://mujoco.readthedocs.io/)
+- [Gymnasium 文档](https://gymnasium.farama.org/)
+- [Stable-Baselines3 文档](https://stable-baselines3.readthedocs.io/)
 
-1. **手术机器人研究**
-   - 运动学和动力学仿真
-   - 控制算法开发和测试
-   - 轨迹规划验证
+## 许可说明
 
-2. **医疗培训**
-   - 手术流程模拟
-   - 器械操作训练
-   - 空间定位练习
-
-3. **强化学习**
-   - 自主手术任务学习
-   - 精细操作控制
-   - 多臂协作研究
-
-## 常见问题
-
-### Q: 运行时提示找不到 mujoco 模块
-A: 请确保已安装 mujoco：`pip install mujoco`
-
-### Q: 场景加载失败
-A: 检查 `medical_scene.xml` 文件路径是否正确，确保与 Python 脚本在同一目录
-
-### Q: 控制响应延迟
-A: 可以在脚本中调整控制频率或降低仿真精度
-
-### Q: 如何录制仿真视频
-A: MuJoCo viewer 支持录屏，按 `Ctrl+P` 开始/停止录制
-
-## 扩展建议
-
-1. **添加力反馈**：集成力传感器模拟
-2. **增强可视化**：添加手术器械工具提示
-3. **多机械臂协作**：添加第二个机械臂
-4. **任务自动化**：编写自动化手术流程脚本
-5. **VR 集成**：连接 VR 设备实现沉浸式控制
-
-## 技术支持
-
-- MuJoCo 官方文档: https://mujoco.readthedocs.io/
-- MuJoCo GitHub: https://github.com/google-deepmind/mujoco
-
-## 许可证
-
-本项目仅供学习和研究使用。
-
-## 版本历史
-
-- v1.0 (2026-01-15)
-  - 初始版本
-  - 基础手术场景
-  - 6-DOF 机械臂
-  - 键盘控制接口
+当前仓库沿用原说明，仅供学习和研究使用，尚未选择标准开源许可证。公开展示不代表授予任意复制、分发或商业使用许可；MuJoCo、Gymnasium 和 Stable-Baselines3 分别遵循各自许可证。
