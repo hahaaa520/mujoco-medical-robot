@@ -109,6 +109,6 @@ python tools/render_preview.py
 - [Gymnasium 文档](https://gymnasium.farama.org/)
 - [Stable-Baselines3 文档](https://stable-baselines3.readthedocs.io/)
 
-## 许可说明
+## License
 
-当前仓库沿用原说明，仅供学习和研究使用，尚未选择标准开源许可证。公开展示不代表授予任意复制、分发或商业使用许可；MuJoCo、Gymnasium 和 Stable-Baselines3 分别遵循各自许可证。
+本项目代码与场景文件采用 [MIT License](LICENSE)。MuJoCo、Gymnasium、Stable-Baselines3 及其他第三方内容分别遵循各自许可证。
