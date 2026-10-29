@@ -22,8 +22,8 @@ MuJoCo 3.4 · Python · Gymnasium · Stable-Baselines3
 推荐使用 Python 虚拟环境。基础交互场景只需要 MuJoCo 和 NumPy：
 
 ```bash
-git clone https://github.com/hahaaa520/-.git
-cd -- -
+git clone https://github.com/hahaaa520/mujoco-medical-robot.git
+cd mujoco-medical-robot
 python -m pip install "mujoco>=3.4.0" "numpy>=1.24.0"
 python run_advanced.py
 ```
